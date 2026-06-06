@@ -1,0 +1,21 @@
+{
+  "name": "interview-game-backend",
+  "version": "1.0.0",
+  "description": "面试心理博弈战 - 后端服务",
+  "main": "src/index.js",
+  "scripts": {
+    "dev": "node --watch src/index.js",
+    "start": "node src/index.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "dependencies": {
+    "@fastify/cors": "^11.2.0",
+    "@supabase/supabase-js": "^2.106.0",
+    "dotenv": "^17.4.2",
+    "fastify": "^5.8.5",
+    "openai": "^6.38.0"
+  }
+}
