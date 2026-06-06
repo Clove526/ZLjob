@@ -1,3 +1,4 @@
+import crypto from 'node:crypto'
 import { createClient } from '@supabase/supabase-js'
 import { llmService } from './llm.js'
 
