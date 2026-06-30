@@ -1569,28 +1569,50 @@ ${interviewers.map(iv => `- ${iv.name}(${iv.title}): ${iv.description} 性格特
       })),
     }
 
+    // 基础统计信息（不依赖LLM，作为最终兜底）
+    const baseStats = {
+      styleAnalysis: `本次面试你完成了 ${gameData.choices.length} 道题，击败 ${gameData.bossesDefeated}/3 位 Boss，收集 ${gameData.cardCount}/5 张能力卡牌，最终评级 ${gameData.rating}。`,
+      weakPoints: gameData.choices.length > 0
+        ? ['回答策略相对单一，可尝试更多元的应对方式', '与面试官的互动深度有待加强', '整体表现中规中矩，缺乏亮点记忆点']
+        : ['本次面试未完成足够多的题目，建议增加练习量'],
+      improvements: [
+        '多关注面试官的隐性考察点，针对性地组织回答',
+        '结合具体案例和数据，让回答更有说服力',
+        '练习时尝试不同策略组合，积累多元应对经验',
+      ],
+      industryFit: gameData.bossesDefeated >= 2 ? '综合能力较好，可尝试中大型企业的标准面试流程' : '建议多积累实战经验，提升综合面试能力',
+      overallAssessment: `本次模拟面试综合评级为 ${gameData.rating} 级${gameData.bossesDefeated >= 3 ? '，成功击败所有 Boss，表现优异' : '，仍有提升空间'}。坚持练习，必有所成！`,
+      fallback: true,
+    }
+
     if (!llmService.isAvailable()) {
-      return {
-        styleAnalysis: 'AI 服务不可用，无法生成详细分析。',
-        weakPoints: ['请确保 LLM API Key 已配置'],
-        improvements: ['配置 DeepSeek API Key 后即可使用 AI 分析功能'],
-        industryFit: '未知',
-        overallAssessment: '完成了一次面试模拟。配置 AI 服务后可获得详细复盘报告。',
-        fallback: true,
-      }
+      console.log('[Report] LLM not available, returning base stats')
+      return baseStats
     }
 
     try {
-      return await llmService.generateReport(gameData)
-    } catch (err) {
-      console.error('Report generation failed:', err.message)
+      const llmReport = await llmService.generateReport(gameData)
+      // LLM可能返回 null 或部分字段缺失
+      if (!llmReport) {
+        console.warn('[Report] LLM returned null, using base stats')
+        return baseStats
+      }
+      // 合并LLM结果和基础统计，确保每个字段都有值
       return {
-        styleAnalysis: '报告生成失败，请稍后重试。',
-        weakPoints: ['系统暂时无法分析'],
-        improvements: ['请稍后重试'],
-        industryFit: '未知',
-        overallAssessment: '面试数据已记录，但 AI 分析暂时不可用。',
-        fallback: true,
+        styleAnalysis: llmReport.styleAnalysis || llmReport.style_analysis || baseStats.styleAnalysis,
+        weakPoints: (llmReport.weakPoints || llmReport.weak_points || baseStats.weakPoints).slice(0, 5),
+        improvements: (llmReport.improvements || llmReport.improvement_suggestions || baseStats.improvements).slice(0, 5),
+        industryFit: llmReport.industryFit || llmReport.industry_fit || baseStats.industryFit,
+        overallAssessment: llmReport.overallAssessment || llmReport.overall_assessment || baseStats.overallAssessment,
+        fallback: false,
+      }
+    } catch (err) {
+      console.error('[Report] generation failed:', err.message)
+      console.error(err.stack)
+      return {
+        ...baseStats,
+        styleAnalysis: `${baseStats.styleAnalysis}（AI 详细分析暂时不可用：${err.message}）`,
+        weakPoints: [...baseStats.weakPoints, '系统错误：' + err.message],
       }
     }
   },

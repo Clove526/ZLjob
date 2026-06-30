@@ -1703,13 +1703,13 @@ body {
 .ending-scene {
   position: relative;
   width: 100vw;
-  height: 100dvh;
+  min-height: 100dvh;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 2rem;
+  padding: 2rem 1rem;
   animation: sceneTransition 1.5s ease-out both;
 }
 
@@ -1719,17 +1719,32 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 2.5rem;
+  gap: 1.5rem;
   text-align: center;
   max-width: 900px;
+  width: 100%;
+  padding: 1rem 0;
 }
 
 .ending-badge {
   font-family: 'ZCOOL KuaiLe', cursive;
-  font-size: clamp(4rem, 12vw, 8rem);
+  font-size: clamp(3rem, 10vw, 7rem);
   font-weight: 900;
   position: relative;
   animation: badgeReveal 1.5s cubic-bezier(0.4, 0, 0.2, 1);
+  line-height: 1;
+  text-align: center;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ending-rating {
+  display: inline-block;
+  line-height: 1;
+  text-align: center;
+  white-space: nowrap;
 }
 
 .ending-badge.rating-s {
@@ -7399,6 +7414,32 @@ body {
   color: #6b7280;
 }
 
+.report-error-icon {
+  font-size: 3rem;
+  margin-bottom: 0.5rem;
+}
+
+.report-error-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #f87171;
+  margin: 0;
+}
+
+.report-error-msg {
+  font-size: 0.85rem;
+  color: #9ca3af;
+  margin: 0;
+  text-align: center;
+}
+
+.report-error-hint {
+  font-size: 0.75rem;
+  color: #6b7280;
+  margin: 0;
+  text-align: center;
+}
+
 .report-body {
   padding: 1rem 1.25rem;
   display: flex;
@@ -7445,10 +7486,12 @@ body {
 }
 
 .report-section-content p {
-  font-size: 0.8rem;
-  color: #9ca3af;
-  line-height: 1.6;
+  font-size: 0.85rem;
+  color: #cbd5e1;
+  line-height: 1.7;
   margin: 0;
+  word-break: break-word;
+  white-space: pre-wrap;
 }
 
 .report-section-content ul {
@@ -7524,4 +7567,406 @@ body {
   background: linear-gradient(135deg, rgba(249, 115, 22, 0.4), rgba(234, 88, 12, 0.25));
   border-color: rgba(249, 115, 22, 0.6);
   box-shadow: 0 0 25px rgba(249, 115, 22, 0.25);
+}
+
+/* ============================================================
+   全面移动端适配 — Mobile Responsive Enhancements
+   ============================================================ */
+
+/* --- 全局触控优化：移除hover态，保留active态 --- */
+@media (hover: none) and (pointer: coarse) {
+  .title-btn-start::before,
+  .battle-strategy-btn:hover,
+  .battle-answer-btn:not(.disabled):hover,
+  .character-card:hover,
+  .choice-btn:hover,
+  .btn-neon:hover,
+  .btn-briefing-next:hover,
+  .battle-peek-btn:hover:not(:disabled),
+  .btn-ending-restart:hover,
+  .btn-ending-report:hover,
+  .book-nav-btn:not(.disabled):hover,
+  .reincarnation-btn.enter:hover,
+  .freetext-submit-btn:hover:not(:disabled) {
+    transform: none !important;
+  }
+}
+
+/* --- 断点一：超小屏幕（≤360px）--- */
+@media (max-width: 360px) {
+  .scene-container { padding: 0.5rem; }
+
+  /* 标题页 */
+  .title-main { font-size: 1.6rem; }
+  .title-content { gap: 1.5rem; }
+  .title-decoration-line { width: 140px; }
+  .title-btn-start { font-size: 0.85rem; padding: 0.65rem 1rem; }
+  .title-version { font-size: 0.6rem; }
+
+  /* 角色选择 */
+  .character-select-title { font-size: 1.3rem; }
+  .character-select-subtitle { font-size: 0.75rem; margin-bottom: 1.5rem; }
+  .character-grid { gap: 0.75rem; }
+  .character-card { padding: 0.75rem; }
+  .character-name { font-size: 1rem; }
+  .character-desc { font-size: 0.75rem; }
+
+  /* 战斗场景 */
+  .boss-battle-layout { height: 100dvh; }
+  .battle-top-bar { padding: 0.35rem 0.5rem; flex-wrap: wrap; gap: 0.3rem; }
+  .battle-stage-badge { font-size: 0.75rem; }
+  .battle-stage-title { display: none; }
+  .battle-card-progress { gap: 0.2rem; }
+  .battle-card-slot { font-size: 0.9rem; }
+  .battle-card-count { font-size: 0.65rem; }
+  .battle-hp-area { padding: 0.35rem 0.5rem; gap: 0.3rem; }
+  .battle-hp-row { gap: 0.35rem; }
+  .battle-hp-label { min-width: 60px; }
+  .battle-hp-name { font-size: 0.65rem; }
+  .battle-hp-bar { height: 10px; border-radius: 5px; }
+  .battle-hp-value { font-size: 0.6rem; min-width: 40px; }
+  .battle-main-area { padding: 0.5rem; gap: 0.5rem; }
+  .battle-boss-avatar { width: 80px; height: 80px; }
+  .battle-stage-name { font-size: 1.1rem; }
+  .battle-stage-subtitle { font-size: 0.75rem; }
+  .battle-stage-desc { font-size: 0.7rem; max-width: 260px; }
+  .battle-start-btn { padding: 0.5rem 1.5rem; font-size: 0.85rem; }
+  .battle-question-box { padding: 0.75rem 1rem; border-radius: 12px; }
+  .battle-question-text { font-size: 0.85rem; line-height: 1.6; }
+  .battle-script-fragment { padding: 0.4rem 0.6rem; }
+  .script-fragment-text { font-size: 0.7rem; }
+
+  /* 策略按钮 */
+  .battle-strategy-bar { grid-template-columns: repeat(2, 1fr); gap: 0.3rem; }
+  .battle-strategy-btn { padding: 0.4rem 0.25rem; gap: 0.15rem; }
+  .strategy-icon { font-size: 1rem; }
+  .strategy-label { font-size: 0.65rem; }
+  .strategy-desc { display: none; }
+
+  /* 选项按钮 */
+  .battle-answer-btn { padding: 0.55rem 0.75rem; font-size: 0.78rem; gap: 0.5rem; }
+  .battle-answer-id { font-size: 0.75rem; min-width: 16px; }
+
+  /* 偷看剧本按钮 */
+  .battle-script-area { flex-wrap: wrap; gap: 0.4rem; }
+  .battle-peek-btn { padding: 0.3rem 0.6rem; font-size: 0.7rem; }
+  .peek-btn-icon { font-size: 0.8rem; }
+  .peek-btn-label { font-size: 0.7rem; }
+
+  /* 模式切换 */
+  .battle-mode-toggle { gap: 0.25rem; }
+  .mode-toggle-btn { font-size: 0.65rem; padding: 0.3rem 0.4rem; }
+
+  /* 自由文本 */
+  .freetext-input { font-size: 0.78rem; padding: 0.5rem 0.75rem; min-height: 80px; }
+  .freetext-submit-btn { padding: 0.5rem 1rem; font-size: 0.78rem; width: 100%; }
+
+  /* 评分动画 */
+  .battle-score-popup { padding: 0.75rem 1rem; }
+  .battle-score-label { font-size: 1.1rem; }
+  .battle-damage-text { font-size: 0.78rem; }
+  .battle-hp-damage { font-size: 0.78rem; }
+
+  /* 嫌疑值 */
+  .battle-suspicion-indicator { padding: 0.2rem 0.4rem; gap: 0.25rem; }
+  .suspicion-bar-mini { width: 32px; }
+  .suspicion-icon { font-size: 0.75rem; }
+  .suspicion-value { font-size: 0.6rem; min-width: 28px; }
+
+  /* 结局 */
+  .ending-scene { padding: 0.75rem; }
+  .ending-container { gap: 1rem; padding-bottom: 4rem; }
+  .ending-badge { font-size: 2.5rem; line-height: 1; margin-bottom: 0.25rem; }
+  .ending-title { font-size: 1.3rem; line-height: 1.2; word-break: break-word; }
+  .ending-description { font-size: 0.85rem; line-height: 1.6; }
+  .ending-state-summary { padding: 0.5rem; gap: 0.4rem; flex-wrap: wrap; justify-content: center; }
+  .state-summary-item { min-width: 70px; padding: 0.3rem 0.5rem; }
+  .state-summary-value { font-size: 0.85rem; }
+  .ending-stats-grid { grid-template-columns: 1fr; gap: 0.5rem; }
+  .ending-stat-card { padding: 0.85rem; gap: 0.35rem; }
+  .stat-card-value { font-size: 1.3rem; }
+  .btn-ending-restart { padding: 0.65rem 1.5rem; font-size: 0.85rem; }
+  .btn-ending-report { font-size: 0.78rem; padding: 0.55rem 1rem; }
+  .ending-actions { flex-direction: column; gap: 0.6rem; width: 100%; }
+  .ending-actions button { width: 100%; }
+
+  /* 书籍翻页 */
+  .book-container { height: 55vh; }
+  .book-nav { gap: 0.5rem; }
+  .book-nav-btn { width: 28px; height: 28px; }
+  .book-nav-indicator { min-width: 50px; font-size: 0.65rem; padding: 0.2rem 0.5rem; }
+  .book-page-selector { min-width: 110px; max-height: 180px; }
+
+  /* 剧本面板 */
+  .script-panel { width: 96vw; max-height: 90vh; }
+  .script-panel-header { padding: 0.6rem 0.75rem; }
+  .script-panel-title { font-size: 0.85rem; }
+  .script-panel-meta { padding: 0.4rem 0.75rem; gap: 0.3rem; }
+  .script-panel-body { padding: 0.6rem 0.75rem; gap: 0.5rem; }
+  .script-section { padding: 0.5rem 0.65rem; }
+  .script-section-content { font-size: 0.78rem; }
+  .script-section-label { font-size: 0.62rem; }
+  .script-panel-close { width: 28px; height: 28px; font-size: 0.8rem; }
+  .script-panel-footer { padding: 0.5rem 0.75rem; }
+  .script-footer-hint { font-size: 0.65rem; }
+
+  /* 复盘报告 */
+  .report-panel { width: 96vw; max-height: 90vh; }
+  .report-header { padding: 0.6rem 0.75rem; }
+  .report-header h2 { font-size: 0.85rem; }
+  .report-body { padding: 0.6rem 0.75rem; gap: 0.5rem; }
+  .report-section { padding: 0.5rem 0.65rem; gap: 0.5rem; }
+  .report-section-content h3 { font-size: 0.75rem; }
+  .report-section-content p { font-size: 0.72rem; }
+  .report-section-content li { font-size: 0.72rem; }
+
+  /* 轮回空间 */
+  .reincarnation-room { padding: 0.75rem 0.5rem; }
+  .reincarnation-title { font-size: 1.2rem; }
+  .reincarnation-subtitle { font-size: 0.7rem; }
+  .reincarnation-stat { padding: 0.4rem 0.25rem; }
+  .rstat-value { font-size: 0.85rem; }
+  .reincarnation-talents-section { padding: 0.6rem; }
+  .reincarnation-talent-card { padding: 0.5rem; }
+  .talent-name { font-size: 0.72rem; }
+  .talent-desc { font-size: 0.65rem; }
+  .talent-btn { font-size: 0.65rem; padding: 0.25rem 0.4rem; }
+  .reincarnation-btn { font-size: 0.75rem; padding: 0.5rem 1rem; }
+  .reincarnation-actions { flex-direction: column; gap: 0.5rem; }
+  .reincarnation-first-hint p { font-size: 0.65rem; }
+
+  /* 叙事场景 */
+  .intro-container { padding: 0.75rem; width: 95%; }
+  .intro-progress { margin-bottom: 1.5rem; }
+  .intro-progress-dot { width: 6px; height: 6px; }
+  .intro-narrator .intro-text-content { font-size: 0.85rem; }
+  .intro-monologue .intro-text-content { font-size: 0.82rem; padding-left: 0.75rem; }
+  .intro-monologue-bold .intro-text-content { font-size: 0.95rem; }
+  .intro-system .intro-text-content { font-size: 0.8rem; padding: 0.6rem; }
+  .intro-hint { font-size: 0.65rem; margin-top: 1.5rem; }
+}
+
+/* --- 断点二：小屏幕手机（361px - 480px）增强 --- */
+@media (max-width: 480px) {
+  /* 标题页按钮触控优化 */
+  .title-btn-start {
+    font-size: 0.9rem;
+    padding: 0.75rem 2rem;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .title-content { gap: 2rem; }
+  .title-subtitle { font-size: 0.8rem; letter-spacing: 0.15em; }
+
+  /* 角色选择触控优化 */
+  .character-card { cursor: pointer; }
+  .character-card:active { transform: scale(0.97); }
+
+  /* 战斗场景 */
+  .battle-top-bar {
+    flex-wrap: wrap;
+    gap: 0.4rem;
+  }
+  .battle-suspicion-indicator {
+    flex-shrink: 0;
+  }
+  .battle-stage-info { flex-shrink: 0; }
+
+  /* 策略按钮触控面积 */
+  .battle-strategy-btn {
+    min-height: 48px;
+    justify-content: center;
+  }
+
+  /* 选项按钮触控面积 */
+  .battle-answer-btn {
+    min-height: 48px;
+    padding: 0.7rem 1rem;
+    border-radius: 10px;
+  }
+
+  /* 偷看按钮触控面积 */
+  .battle-peek-btn {
+    min-height: 38px;
+    padding: 0.4rem 0.7rem;
+  }
+
+  /* 模式切换按钮触控面积 */
+  .mode-toggle-btn {
+    min-height: 38px;
+    font-size: 0.72rem;
+  }
+
+  /* 自由文本提交按钮 */
+  .freetext-submit-btn {
+    width: 100%;
+    padding: 0.65rem 1.25rem;
+  }
+
+  /* 自由文本输入框 */
+  .freetext-input {
+    min-height: 90px;
+    font-size: 0.82rem;
+  }
+
+  /* 备战按钮 */
+  .battle-start-btn {
+    min-height: 44px;
+    padding: 0.65rem 2rem;
+  }
+
+  /* 轮回空间 */
+  .reincarnation-actions {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  .reincarnation-btn {
+    width: 100%;
+    text-align: center;
+  }
+
+  /* 忽略左侧书籍装订 */
+  .book-cover-left { display: none; }
+  .book-binding-line { display: none; }
+  .book-binding-shadow { display: none; }
+
+  /* 结局状态摘要 */
+  .ending-state-summary {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+  .state-summary-item {
+    flex: 1;
+    min-width: 80px;
+  }
+
+  /* 结局统计网格 */
+  .ending-stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  /* 结局按钮 */
+  .ending-actions {
+    width: 100%;
+    padding: 0 0.5rem;
+  }
+  .btn-ending-restart {
+    width: 100%;
+    padding: 0.75rem 1.5rem;
+    font-size: 0.95rem;
+    min-height: 48px;
+  }
+  .btn-ending-report {
+    min-height: 44px;
+  }
+
+  /* GLASS卡片 */
+  .glass-card.rounded-2xl.p-6 {
+    padding: 1rem !important;
+  }
+
+  /* AI分析 */
+  .battle-ai-analysis { padding: 0.3rem 0.5rem; }
+  .battle-ai-analysis span { font-size: 0.72rem; }
+  .battle-ai-score { font-size: 0.72rem; }
+  .battle-response-text { font-size: 0.85rem; }
+
+  /* LLM回应 */
+  .battle-llm-response { padding: 1rem 1.25rem; }
+  .battle-llm-text { font-size: 0.82rem; }
+
+  /* 第一阶段提示 */
+  .battle-strategy-hint { font-size: 0.72rem; }
+
+  /* 卡牌获得 */
+  .battle-card-earned { font-size: 0.75rem; }
+}
+
+/* --- 断点三：平板及小屏笔记本（481px - 768px）增强 --- */
+@media (max-width: 768px) and (min-width: 481px) {
+  /* 角色选择 */
+  .character-grid {
+    grid-template-columns: repeat(2, 1fr);
+    max-width: 600px;
+  }
+
+  /* 战斗场景 */
+  .battle-script-area {
+    flex-wrap: nowrap;
+  }
+  .battle-peek-btn {
+    flex-shrink: 0;
+  }
+
+  /* 自由文本 */
+  .freetext-submit-btn {
+    align-self: flex-end;
+    min-width: 160px;
+  }
+
+  /* 轮回空间 */
+  .reincarnation-talent-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  /* 结局 */
+  .ending-state-summary {
+    gap: 0.75rem;
+  }
+  .ending-stats-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* --- 断点四：大字体模式适配 --- */
+@media (prefers-reduced-motion: reduce) {
+  .battle-hp-fill,
+  .suspicion-fill,
+  .battle-score-popup,
+  .script-panel {
+    transition: none !important;
+    animation: none !important;
+  }
+  .particle,
+  .celebration-particle,
+  .reincarnation-vortex {
+    animation: none !important;
+    display: none;
+  }
+}
+
+/* ============================================================
+   图片资源 — 移动端优化
+   ============================================================ */
+
+@media (max-width: 768px) {
+  .scene-bg img {
+    object-position: 50% 30%;
+  }
+  .title-background img {
+    object-position: 50% 30%;
+  }
+}
+
+/* ============================================================
+   Touch设备 — 禁用粘滞悬停
+   ============================================================ */
+
+@media (hover: none) {
+  .character-card:hover,
+  .choice-btn:hover,
+  .battle-strategy-btn:hover {
+    background: inherit;
+    border-color: inherit;
+    box-shadow: none;
+    transform: none;
+  }
+
+  .character-card:active,
+  .choice-btn:active,
+  .battle-strategy-btn:active {
+    transform: scale(0.97);
+  }
 }
