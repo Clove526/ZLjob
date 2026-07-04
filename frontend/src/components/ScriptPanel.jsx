@@ -31,11 +31,15 @@ export default function ScriptPanel() {
         <div className="script-panel" onClick={e => e.stopPropagation()}>
           <div className="script-panel-header">
             <span className="script-panel-title">📖 正在偷看剧本...</span>
+            <button className="script-panel-close" onClick={closeScriptPanel}>✕</button>
           </div>
           <div className="script-panel-body">
             <div className="script-loading">
               <div className="script-loading-spinner" />
               <p>正在读取面试官的内心想法...</p>
+              <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.8rem', marginTop: '0.5rem' }}>
+                最多等待 30 秒,失败可点 ✕ 关闭后重试
+              </p>
             </div>
           </div>
         </div>
