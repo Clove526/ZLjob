@@ -259,6 +259,28 @@ export function GameProvider({ children }) {
     setSelectedStrategy(strategy)
   }, [])
 
+  // 拉取游戏结果(从后端 result API 拿最终评分/卡牌/boss 击败数等)
+  const fetchResult = useCallback(async (gid) => {
+    try {
+      console.log('[fetchResult] calling result API for:', gid)
+      const res = await fetch(`/api/game/result/${gid}`)
+      const final = await res.json()
+      console.log('[fetchResult] result from server:', JSON.stringify(final, null, 2))
+      if (!final) {
+        console.error('Failed to fetch game result, got null response')
+        return
+      }
+      addReincarnation({
+        rating: final.rating,
+        cardCount: final.cardCount,
+        bossesDefeated: final.bossesDefeated,
+        isHiddenEnding: final.isHiddenEnding,
+      })
+      setResult(final)
+      setTimeout(() => transitionToPhase('ending'), 500)
+    } catch (err) { console.error(err) }
+  }, [transitionToPhase])
+
   // 评分阶段后续:推进到下一题(选择题与自由回答共用)
   const goToNextQuestion = useCallback(async (data, gameId) => {
     if (data.isFinished) {
@@ -378,28 +400,6 @@ export function GameProvider({ children }) {
       finally { setIsSubmitting(false) }
     }, 800)
   }, [gameId, currentQuestion, isSubmitting, answerStartTime, startTimerForQuestion, selectedStrategy, continueFromScoring])
-
-  const fetchResult = useCallback(async (gid) => {
-    try {
-      console.log('[fetchResult] calling result API for:', gid)
-      const res = await fetch(`/api/game/result/${gid}`)
-      const final = await res.json()
-      console.log('[fetchResult] result from server:', JSON.stringify(final, null, 2))
-      if (!final) {
-        console.error('Failed to fetch game result, got null response')
-        return
-      }
-      // 保存轮回进度
-      addReincarnation({
-        rating: final.rating,
-        cardCount: final.cardCount,
-        bossesDefeated: final.bossesDefeated,
-        isHiddenEnding: final.isHiddenEnding,
-      })
-      setResult(final)
-      setTimeout(() => transitionToPhase('ending'), 500)
-    } catch (err) { console.error(err) }
-  }, [transitionToPhase])
 
   // 自由文本提交
   const handleFreeTextSubmit = useCallback(async () => {
