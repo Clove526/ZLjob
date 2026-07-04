@@ -298,7 +298,7 @@ export default function BattleScene() {
           </div>
         )}
 
-        {/* 结算：面试官评价 */}
+        {/* 结算：面试官评价(已避免与评分弹窗中的 analysis 重复) */}
         {battlePhase === 'settled' && lastRoundResult && (
           <div className="battle-settled">
             <div className="battle-llm-response">
@@ -306,11 +306,6 @@ export default function BattleScene() {
                 {Object.values(lastRoundResult.llmResponse || {})[0] || lastRoundResult.innerMonologue || '（面试官在记录着什么...）'}
               </p>
             </div>
-            {lastRoundResult.analysis && (
-              <div className="battle-llm-analysis">
-                <p>{lastRoundResult.analysis}</p>
-              </div>
-            )}
           </div>
         )}
       </div>
