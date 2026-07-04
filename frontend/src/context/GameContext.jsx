@@ -97,7 +97,7 @@ export function GameProvider({ children }) {
   const [battlePhase, setBattlePhase] = useState('preparation')
   const [currentStage, setCurrentStage] = useState('stage1')
   const [stageInfo, setStageInfo] = useState(null)
-  const [playerHP, setPlayerHP] = useState(80)
+  const [playerHP, setPlayerHP] = useState(100)
   const [bossHP, setBossHP] = useState({})
   const [collectedCards, setCollectedCards] = useState([])
   const [selectedStrategy, setSelectedStrategy] = useState(null)
@@ -126,6 +126,9 @@ export function GameProvider({ children }) {
   // 自由文本模式
   const [freeTextAnswer, setFreeTextAnswer] = useState('')
   const [isFreeTextMode, setFreeTextMode] = useState(false)
+
+  // 评分阶段定时器与"继续"按钮用的 pending data
+  const scoringTimersRef = useRef({ phase1: null, phase2: null, advanced: false, data: null, gameId: null })
 
   const timerRef = useRef(null)
   const peekTimerRef = useRef(null)
@@ -209,7 +212,7 @@ export function GameProvider({ children }) {
       setActingValue(data.actingValue ?? 100); setMentalFatigue(data.mentalFatigue ?? 0); setFocus(data.focus ?? 100)
       setCurrentInterviewerIndex(0)
       setCurrentStage(data.currentStage || 'stage1'); setStageInfo(data.stageInfo || null)
-      setPlayerHP(data.playerHP ?? 80); setBossHP(data.bossHP || {})
+      setPlayerHP(data.playerHP ?? 100); setBossHP(data.bossHP || {})
       setCollectedCards(data.collectedCards || [])
       setSuspicion(0); setScriptInsight(null); setIsPeeking(false); setSuspicionEffect(null)
       setIntroStep(0); setIntroCharIndex(0); setIntroText(''); setIntroPaused(false)
@@ -238,7 +241,7 @@ export function GameProvider({ children }) {
       setCurrentQuestion(data.currentQuestion); setEvents(data.events || []); setAvatarUrls(data.avatarUrls || {})
       setActingValue(data.actingValue ?? 100); setMentalFatigue(data.mentalFatigue ?? 0); setFocus(data.focus ?? 100)
       setCurrentStage(data.currentStage || 'stage1'); setStageInfo(data.stageInfo || null)
-      setPlayerHP(data.playerHP ?? 80); setBossHP(data.bossHP || {})
+      setPlayerHP(data.playerHP ?? 100); setBossHP(data.bossHP || {})
       setCollectedCards(data.collectedCards || [])
       setSuspicion(0); setScriptInsight(null); setIsPeeking(false); setSuspicionEffect(null); setCounterRecon(false)
       setSelectedRole(data.role)
@@ -255,6 +258,64 @@ export function GameProvider({ children }) {
   const handleStrategySelect = useCallback((strategy) => {
     setSelectedStrategy(strategy)
   }, [])
+
+  // 评分阶段后续:推进到下一题(选择题与自由回答共用)
+  const goToNextQuestion = useCallback(async (data, gameId) => {
+    if (data.isFinished) {
+      await fetchResult(gameId)
+    } else if (data.playerDefeated || data.bossDefeated) {
+      if (data.nextQuestion && data.currentStage) {
+        setCurrentStage(data.currentStage)
+        setStageInfo(data.stageInfo || null)
+        setCurrentQuestion(data.nextQuestion)
+        setCurrentRound(data.round)
+        setSelectedChoice(null)
+        setSelectedStrategy(null)
+        setCurrentSpeaker('interviewer')
+        setBossDefeated(false)
+        setPlayerDefeated(false)
+        setStageCleared(false)
+        setStageClearedName(null)
+        setNewCards([])
+        setLastScore(null)
+        setBattlePhase(data.bossDefeated ? 'preparation' : 'questioning')
+        startTimerForQuestion(data.nextQuestion)
+      } else {
+        await fetchResult(gameId)
+      }
+    } else {
+      if (data.nextQuestion) {
+        setCurrentQuestion(data.nextQuestion)
+        setCurrentRound(data.round)
+        setSelectedChoice(null)
+        setSelectedStrategy(null)
+        setCurrentSpeaker('interviewer')
+        setNewCards([])
+        setLastScore(null)
+        setBattlePhase('questioning')
+        startTimerForQuestion(data.nextQuestion)
+      } else {
+        await fetchResult(gameId)
+      }
+    }
+  }, [fetchResult, startTimerForQuestion])
+
+  // "继续"按钮:跳过评分阶段的自动等待
+  const continueFromScoring = useCallback(() => {
+    const t = scoringTimersRef.current
+    if (t.advanced) return
+    t.advanced = true
+    if (t.phase1) clearTimeout(t.phase1)
+    if (t.phase2) clearTimeout(t.phase2)
+    if (!t.data || !t.gameId) return
+
+    setCurrentSpeaker('interviewer')
+    setBattlePhase('settled')
+
+    t.phase2 = setTimeout(() => {
+      goToNextQuestion(t.data, t.gameId)
+    }, 1500)
+  }, [goToNextQuestion])
 
   const handleChoiceSubmit = useCallback(async (choice) => {
     if (isSubmitting) return
@@ -303,55 +364,20 @@ export function GameProvider({ children }) {
           { speaker: 'interviewer', text: respText },
         ])
 
-        setTimeout(() => {
-          setCurrentSpeaker('interviewer')
-          setBattlePhase('settled')
-
-          setTimeout(async () => {
-            if (data.isFinished) {
-              await fetchResult(gameId)
-            } else if (data.playerDefeated || data.bossDefeated) {
-              if (data.nextQuestion && data.currentStage) {
-                setCurrentStage(data.currentStage)
-                setStageInfo(data.stageInfo || null)
-                setCurrentQuestion(data.nextQuestion)
-                setCurrentRound(data.round)
-                setSelectedChoice(null)
-                setSelectedStrategy(null)
-                setCurrentSpeaker('interviewer')
-                setBossDefeated(false)
-                setPlayerDefeated(false)
-                setStageCleared(false)
-                setStageClearedName(null)
-                setNewCards([])
-                setLastScore(null)
-                // Boss 击败后进入新关卡的备战阶段
-                setBattlePhase(data.bossDefeated ? 'preparation' : 'questioning')
-                startTimerForQuestion(data.nextQuestion)
-              } else {
-                await fetchResult(gameId)
-              }
-            } else {
-              if (data.nextQuestion) {
-                setCurrentQuestion(data.nextQuestion)
-                setCurrentRound(data.round)
-                setSelectedChoice(null)
-                setSelectedStrategy(null)
-                setCurrentSpeaker('interviewer')
-                setNewCards([])
-                setLastScore(null)
-                setBattlePhase('questioning')
-                startTimerForQuestion(data.nextQuestion)
-              } else {
-                await fetchResult(gameId)
-              }
-            }
-          }, 3000)
-        }, 2000)
+        // 评分阶段:默认 5s 后自动推进,用户可点"继续"按钮立即跳过
+        const t = scoringTimersRef.current
+        t.advanced = false
+        t.data = data
+        t.gameId = gameId
+        if (t.phase1) clearTimeout(t.phase1)
+        if (t.phase2) clearTimeout(t.phase2)
+        t.phase1 = setTimeout(() => {
+          continueFromScoring()
+        }, 5000)
       } catch (err) { console.error(err) }
       finally { setIsSubmitting(false) }
     }, 800)
-  }, [gameId, currentQuestion, isSubmitting, answerStartTime, startTimerForQuestion, selectedStrategy])
+  }, [gameId, currentQuestion, isSubmitting, answerStartTime, startTimerForQuestion, selectedStrategy, continueFromScoring])
 
   const fetchResult = useCallback(async (gid) => {
     try {
@@ -423,52 +449,19 @@ export function GameProvider({ children }) {
         { speaker: 'interviewer', text: respText },
       ])
 
-      setTimeout(() => {
-        setCurrentSpeaker('interviewer')
-        setBattlePhase('settled')
-
-        setTimeout(async () => {
-          if (data.isFinished) {
-            await fetchResult(gameId)
-          } else if (data.playerDefeated || data.bossDefeated) {
-            if (data.nextQuestion && data.currentStage) {
-              setCurrentStage(data.currentStage)
-              setStageInfo(data.stageInfo || null)
-              setCurrentQuestion(data.nextQuestion)
-              setCurrentRound(data.round)
-              setSelectedChoice(null)
-              setSelectedStrategy(null)
-              setCurrentSpeaker('interviewer')
-              setBossDefeated(false)
-              setPlayerDefeated(false)
-              setStageCleared(false)
-              setStageClearedName(null)
-              setNewCards([])
-              setLastScore(null)
-              setBattlePhase(data.bossDefeated ? 'preparation' : 'questioning')
-              if (data.nextQuestion) startTimerForQuestion(data.nextQuestion)
-            } else {
-              await fetchResult(gameId)
-            }
-          } else {
-            if (data.nextQuestion) {
-              setCurrentQuestion(data.nextQuestion); setCurrentRound(data.round)
-              setSelectedChoice(null); setFreeTextAnswer('')
-              setSelectedStrategy(null)
-              setCurrentSpeaker('interviewer')
-              setNewCards([])
-              setLastScore(null)
-              setBattlePhase('questioning')
-              if (data.nextQuestion) startTimerForQuestion(data.nextQuestion)
-            } else {
-              await fetchResult(gameId)
-            }
-          }
-        }, 3000)
-      }, 2000)
+      // 评分阶段:默认 5s 后自动推进,用户可点"继续"按钮立即跳过
+      const t = scoringTimersRef.current
+      t.advanced = false
+      t.data = data
+      t.gameId = gameId
+      if (t.phase1) clearTimeout(t.phase1)
+      if (t.phase2) clearTimeout(t.phase2)
+      t.phase1 = setTimeout(() => {
+        continueFromScoring()
+      }, 5000)
     } catch (err) { console.error(err) }
     finally { setIsSubmitting(false); setFreeTextAnswer('') }
-  }, [gameId, currentQuestion, isSubmitting, freeTextAnswer, answerStartTime, startTimerForQuestion])
+  }, [gameId, currentQuestion, isSubmitting, freeTextAnswer, answerStartTime, startTimerForQuestion, continueFromScoring])
 
   // 「剧本」偷看
   const handleScriptPeek = useCallback(async () => {
@@ -543,6 +536,7 @@ export function GameProvider({ children }) {
     getCurrentBackground, reset,
     handleFreeTextSubmit, freeTextAnswer, setFreeTextAnswer,
     isFreeTextMode, setFreeTextMode,
+    continueFromScoring,
   }
 
   return <GameContext.Provider value={value}>{children}</GameContext.Provider>

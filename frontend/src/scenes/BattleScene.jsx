@@ -25,6 +25,7 @@ export default function BattleScene() {
     lastRoundResult, isSubmitting,
     suspicion, suspicionEffect, handleScriptPeek, isPeeking, peekCooldown,
     handleFreeTextSubmit, freeTextAnswer, setFreeTextAnswer, isFreeTextMode, setFreeTextMode,
+    continueFromScoring,
   } = useGame()
 
   // Show loading state while transitioning between questions or stages
@@ -291,6 +292,9 @@ export default function BattleScene() {
                 return card ? <span key={cardId} className="battle-card-earned">🃏 获得卡牌：{card.name}</span> : null
               })}
             </div>
+            <button className="battle-continue-btn" onClick={continueFromScoring}>
+              继续 <span className="arrow">→</span>
+            </button>
           </div>
         )}
 
