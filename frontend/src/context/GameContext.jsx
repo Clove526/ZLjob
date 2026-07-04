@@ -394,15 +394,27 @@ export function GameProvider({ children }) {
       })
       const data = await res.json()
       setLastRoundResult(data); setInterviewers(data.interviewers || [])
+      if (data.currentInterviewerIndex != null) setCurrentInterviewerIndex(data.currentInterviewerIndex)
       if (data.eventTriggered) setEvents(prev => prev.filter(e => e.id !== data.eventTriggered.id))
       if (data.actingValue != null) setActingValue(data.actingValue)
       if (data.mentalFatigue != null) setMentalFatigue(data.mentalFatigue)
       if (data.focus != null) setFocus(data.focus)
       if (data.sceneDescription) setSceneDescription(data.sceneDescription)
       if (data.branchNarrative) setBranchNarrative(data.branchNarrative)
+      if (data.playerHP != null) setPlayerHP(data.playerHP)
+      if (data.bossHP) setBossHP(data.bossHP)
+      if (data.collectedCards) setCollectedCards(data.collectedCards)
+      if (data.damage != null) setLastDamage(data.damage)
+      if (data.hpDamage != null) setLastHpDamage(data.hpDamage)
+      if (data.newCards) setNewCards(data.newCards)
+      if (data.bossDefeated) setBossDefeated(true)
+      if (data.playerDefeated) setPlayerDefeated(true)
+      if (data.stageCleared) { setStageCleared(true); setStageClearedName(data.stageClearedName) }
+      if (data.currentStage) setCurrentStage(data.currentStage)
+      if (data.stageInfo) setStageInfo(data.stageInfo)
 
       setBattlePhase('scoring')
-      setLastScore(data.overallScore >= 75 ? 'Excellent' : data.overallScore >= 55 ? 'Good' : data.overallScore >= 35 ? 'OK' : 'Poor')
+      setLastScore(data.score || (data.overallScore >= 75 ? 'Excellent' : data.overallScore >= 55 ? 'Good' : data.overallScore >= 35 ? 'OK' : 'Poor'))
 
       const respText = Object.values(data.llmResponse || {})[0] || data.innerMonologue || '（面试官在记录着什么...）'
       setDialogHistory(prev => [
@@ -418,12 +430,39 @@ export function GameProvider({ children }) {
         setTimeout(async () => {
           if (data.isFinished) {
             await fetchResult(gameId)
+          } else if (data.playerDefeated || data.bossDefeated) {
+            if (data.nextQuestion && data.currentStage) {
+              setCurrentStage(data.currentStage)
+              setStageInfo(data.stageInfo || null)
+              setCurrentQuestion(data.nextQuestion)
+              setCurrentRound(data.round)
+              setSelectedChoice(null)
+              setSelectedStrategy(null)
+              setCurrentSpeaker('interviewer')
+              setBossDefeated(false)
+              setPlayerDefeated(false)
+              setStageCleared(false)
+              setStageClearedName(null)
+              setNewCards([])
+              setLastScore(null)
+              setBattlePhase(data.bossDefeated ? 'preparation' : 'questioning')
+              if (data.nextQuestion) startTimerForQuestion(data.nextQuestion)
+            } else {
+              await fetchResult(gameId)
+            }
           } else {
-            setCurrentQuestion(data.nextQuestion); setCurrentRound(data.round)
-            setSelectedChoice(null); setFreeTextAnswer('')
-            setCurrentSpeaker('interviewer')
-            setBattlePhase('questioning')
-            if (data.nextQuestion) startTimerForQuestion(data.nextQuestion)
+            if (data.nextQuestion) {
+              setCurrentQuestion(data.nextQuestion); setCurrentRound(data.round)
+              setSelectedChoice(null); setFreeTextAnswer('')
+              setSelectedStrategy(null)
+              setCurrentSpeaker('interviewer')
+              setNewCards([])
+              setLastScore(null)
+              setBattlePhase('questioning')
+              if (data.nextQuestion) startTimerForQuestion(data.nextQuestion)
+            } else {
+              await fetchResult(gameId)
+            }
           }
         }, 3000)
       }, 2000)

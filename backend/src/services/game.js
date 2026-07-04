@@ -1136,6 +1136,65 @@ ${interviewers.map(iv => `- ${iv.name}(${iv.title}): ${iv.description} 性格特
 
     game.focus = Math.max(10, Math.min(100, game.focus - 5))
 
+    // === 自由文本模式:根据 AI overallScore 扣减 Boss HP(与选择题模式一致) ===
+    const currentStageId = game.currentStage
+    const stage = STAGE_MAPPING[currentStageId]
+    const isExcellent = overallScore >= 75
+    const isGood = overallScore >= 55
+    const isOk = overallScore >= 35
+    const scoreLabel = isExcellent ? 'Excellent' : isGood ? 'Good' : isOk ? 'OK' : 'Poor'
+
+    let baseDamage = 0
+    if (isExcellent) baseDamage = 20 + Math.floor(Math.random() * 8)  // 20-27
+    else if (isGood) baseDamage = 12 + Math.floor(Math.random() * 6)  // 12-17
+    else if (isOk) baseDamage = 6 + Math.floor(Math.random() * 4)     // 6-9
+    else baseDamage = -3  // 差回答:boss 回血
+
+    const damage = baseDamage
+    const currentBossHP = game.bossHP[currentStageId] || 0
+    const newBossHP = Math.max(0, currentBossHP - damage)
+    game.bossHP[currentStageId] = newBossHP
+
+    // 玩家 HP:压力问题或高精神疲劳时小幅扣血
+    let hpDamage = 0
+    if (isPressureQuestion) hpDamage = 5
+    if (game.mentalFatigue >= 80) hpDamage += 3
+
+    let newPlayerHP = Math.max(0, Math.min(100, game.playerHP - hpDamage + (isExcellent ? 5 : 0)))
+    if (newPlayerHP <= 0 && game.equippedTalents.includes('t2') && !game.talentState.deathDefied) {
+      newPlayerHP = 1
+      game.talentState.deathDefied = true
+    }
+    game.playerHP = newPlayerHP
+
+    // 检查 Boss 是否被击败 / 关卡通关
+    const bossDefeated = newBossHP <= 0
+    let stageCleared = false
+    let stageClearedName = null
+    if (bossDefeated && stage) {
+      stageCleared = true
+      stageClearedName = stage.name
+      const stageIndex = STAGE_ORDER.indexOf(currentStageId)
+      if (stageIndex >= 0 && stageIndex < STAGE_ORDER.length - 1) {
+        game.currentStage = STAGE_ORDER[stageIndex + 1]
+      }
+    }
+    const playerDefeated = newPlayerHP <= 0
+
+    // 卡牌收集判定
+    const newCards = []
+    for (const card of CARDS) {
+      if (game.collectedCards.includes(card.id)) continue
+      const roundData = { isPressure: isPressureQuestion }
+      const analysis = { strategyType: analysisResult.strategyType || '', overallScore }
+      if (card.condition(roundData, analysis)) {
+        newCards.push(card.id)
+        game.collectedCards.push(card.id)
+      }
+    }
+
+    game.strategyHistory.push({ round: game.round, strategy: 'free_text', answerId: 'free_text', score: scoreLabel, damage, hpDamage })
+
     const mockAnswerForResponse = {
       id: 'free_text',
       type: analysisResult.strategyType || '自由文本',
@@ -1172,9 +1231,15 @@ ${interviewers.map(iv => `- ${iv.name}(${iv.title}): ${iv.description} 性格特
       isPressure: isPressureQuestion,
       timeSpent,
       actingChange: -(actingCost) + actingRestore,
+      damage,
+      hpDamage,
+      score: scoreLabel,
+      collectedCards: newCards,
     })
 
-    const isFinished = game.round >= game.maxRounds
+    // 完成判定:轮数耗尽 / 玩家失败 / 所有 Boss 已被击败
+    const isAllBossesDefeated = STAGE_ORDER.every(sId => (game.bossHP[sId] || 0) <= 0)
+    const isFinished = game.round >= game.maxRounds || playerDefeated || isAllBossesDefeated
     if (isFinished) {
       game.status = 'finished'
     }
@@ -1195,7 +1260,8 @@ ${interviewers.map(iv => `- ${iv.name}(${iv.title}): ${iv.description} 性格特
     }
 
     let nextQuestionObj = null
-    if (!isFinished) {
+    let nextQuestionStage = currentStageId
+    if (!isFinished && !bossDefeated) {
       const nextQuestionId = game.questions[game.round]
       const nq = QUESTIONS[nextQuestionId]
       if (nq) {
@@ -1214,15 +1280,51 @@ ${interviewers.map(iv => `- ${iv.name}(${iv.title}): ${iv.description} 性格特
       }
     }
 
+    // Boss 击败后,加载下一关卡的第一题
+    if (bossDefeated && !isFinished) {
+      const nextStageId = game.currentStage
+      const nextStageQuestions = game.stageQuestions[nextStageId] || []
+      if (nextStageQuestions.length > 0) {
+        const nq = nextStageQuestions[0]
+        nextQuestionObj = {
+          id: nq.id,
+          category: nq.category,
+          question_text: nq.question_text,
+          isPressure: nq.isPressure || false,
+          answers: nq.answers.map(a => ({ id: a.id, type: a.type, content: a.content })),
+          hints: nq.hints || [],
+        }
+        nextQuestionStage = nextStageId
+      }
+    }
+
     return {
       round: game.round,
       maxRounds: game.maxRounds,
+      currentStage: game.currentStage,
+      stageInfo: STAGE_MAPPING[game.currentStage] || null,
       effects: effectsArray,
       interviewers: game.interviewers,
       llmResponse: llmResponsesMap,
       eventTriggered: null,
       isFinished,
+      playerHP: game.playerHP,
+      bossHP: game.bossHP,
+      collectedCards: game.collectedCards,
+      newCards,
+      score: scoreLabel,
+      rawScore: overallScore,
+      damage,
+      hpDamage,
+      bossDefeated,
+      stageCleared,
+      stageClearedName,
+      playerDefeated,
+      nextQuestionStage: bossDefeated ? game.currentStage : nextQuestionStage,
       nextQuestion: nextQuestionObj,
+      equippedTalents: game.equippedTalents,
+      talentState: game.talentState,
+      deathDefied: game.talentState.deathDefied,
       analysis: analysisResult.analysis,
       strategyType: analysisResult.strategyType,
       overallScore,
