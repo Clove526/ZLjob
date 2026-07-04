@@ -1,4 +1,4 @@
-import { createServer } from '../backend/src/server.js'
+import { createServer } from '../backend/src/index.js'
 
 let appInstance
 

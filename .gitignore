@@ -50,6 +50,9 @@ temp
 # Supabase local dev
 .supabase
 
+# Documentation artifacts
+*.pdf
+
 # Trae IDE configuration
 .trae/
 .vercel
