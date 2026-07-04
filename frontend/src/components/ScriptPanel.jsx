@@ -3,6 +3,28 @@ import { useGame } from '../context/GameContext'
 export default function ScriptPanel() {
   const { scriptInsight, closeScriptPanel, suspicion, counterRecon } = useGame()
 
+  // 错误状态
+  if (scriptInsight?._error) {
+    return (
+      <div className="script-panel-overlay" onClick={closeScriptPanel}>
+        <div className="script-panel error" onClick={e => e.stopPropagation()}>
+          <div className="script-panel-header">
+            <span className="script-panel-title">⚠️ 偷看失败</span>
+            <button className="script-panel-close" onClick={closeScriptPanel}>✕</button>
+          </div>
+          <div className="script-panel-body">
+            <p style={{ color: '#fca5a5', fontSize: '1.1rem', textAlign: 'center', padding: '2rem 1rem', lineHeight: 1.7 }}>
+              {scriptInsight.message}
+            </p>
+            <p style={{ color: 'rgba(255,255,255,0.5)', textAlign: 'center', fontSize: '0.9rem' }}>
+              点击空白处关闭
+            </p>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   if (!scriptInsight) {
     return (
       <div className="script-panel-overlay" onClick={closeScriptPanel}>

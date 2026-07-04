@@ -466,13 +466,25 @@ export function GameProvider({ children }) {
   // 「剧本」偷看
   const handleScriptPeek = useCallback(async () => {
     if (isPeeking || peekCooldown || !gameId) return
-    setIsPeeking(true)
     setPeekCooldown(true)
+
+    // 30 秒超时,防止 LLM 慢响应导致永久转圈
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), 30000)
+
     try {
       const res = await fetch('/api/game/script', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ gameId, questionId: currentQuestion?.id })
+        body: JSON.stringify({ gameId, questionId: currentQuestion?.id }),
+        signal: controller.signal,
       })
+      clearTimeout(timeoutId)
+
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}))
+        throw new Error(errData.error || `HTTP ${res.status}`)
+      }
+
       const data = await res.json()
       setScriptInsight(data.insight)
       setSuspicion(data.suspicion)
@@ -484,8 +496,22 @@ export function GameProvider({ children }) {
           return updated ? { ...iv, affinity: updated.affinity } : iv
         }))
       }
+      // 数据就绪后再打开面板(避免无内容的转圈)
+      setIsPeeking(true)
     } catch (err) {
+      clearTimeout(timeoutId)
       console.error('Script peek failed:', err)
+      const isTimeout = err.name === 'AbortError'
+      const isNetwork = err.message?.includes('Failed to fetch')
+      setScriptInsight({
+        _error: true,
+        message: isTimeout
+          ? 'AI 思考超时,请稍后再试'
+          : isNetwork
+            ? '网络异常,无法偷看剧本'
+            : (err.message || '偷看失败'),
+      })
+      setIsPeeking(true)
     }
   }, [gameId, currentQuestion, isPeeking, peekCooldown])
 
